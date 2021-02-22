@@ -20,6 +20,8 @@
 
 use Illuminate\Support\Facades\Route;
 
+Route::get('/v1/sso/user/login/{user}', "Api\UserController@login")->name('sso.login')->middleware('signed');
+
 Route::group(['middleware' => 'locale'], function() {
     // 如果启用 LDAP ，则不允许用户注册和重置密码
     $ldapDisabled = !ldap_enabled();
