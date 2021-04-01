@@ -19,19 +19,19 @@
 
 
 use Illuminate\Support\Facades\Route;
-
 Route::get('/v1/sso/user/login/{user}', "Api\UserController@login")->name('sso.login')->middleware('signed');
 
-Route::group(['middleware' => 'locale'], function() {
+Route::group(['middleware' => 'locale'], function () {
     // 如果启用 LDAP ，则不允许用户注册和重置密码
     $ldapDisabled = !ldap_enabled();
-    Auth::routes([
-        'reset' => $ldapDisabled,
-        'verify' => $ldapDisabled,
-        'register' => $ldapDisabled,
-    ]);
+    $authRoutes = [
+        'reset'    => $ldapDisabled,
+        'verify'   => $ldapDisabled,
+        'register' => $ldapDisabled && register_enabled(),
+    ];
+    Auth::routes($authRoutes);
 
-    Route::group(['middleware' => 'global-auth'], function() {
+    Route::group(['middleware' => 'global-auth'], function () {
         // 公共首页
         Route::get('/{catalog?}', 'HomeController@home')->name('home');
         // 项目公共页面
@@ -69,7 +69,7 @@ Route::group(['middleware' => 'locale'], function() {
             // 项目分享
             Route::get('/{id}/doc/{page_id}.json', 'DocumentController@getPageJSON')->name('doc:json');
             Route::get('/{id}/doc/{page_id}/histories/{history_id}.json',
-                       'HistoryController@getPageJSON')->name('doc:history:json');
+                'HistoryController@getPageJSON')->name('doc:history:json');
         });
 
         Route::group(['prefix' => 'swagger', 'as' => 'swagger:'], function () {
@@ -79,7 +79,7 @@ Route::group(['middleware' => 'locale'], function() {
         });
 
         // 用户扮演
-        Route::group(['prefix' => 'impersonate', 'as' => 'impersonate:'], function() {
+        Route::group(['prefix' => 'impersonate', 'as' => 'impersonate:'], function () {
             Route::post('/{id}', 'ImpersonateController@impersonate')->name('start');
             Route::delete('/', 'ImpersonateController@stopImpersonate')->name('stop');
         });
@@ -210,7 +210,7 @@ Route::group(['middleware' => 'locale'], function() {
                 Route::get('/{id}/doc/{page_id}/attachments', 'AttachmentController@page')
                      ->name('doc:attachment');
                 Route::delete('/{id}/doc/{page_id}/attachments/{attachment_id}',
-                              'AttachmentController@delete')->name('doc:attachment:delete');
+                    'AttachmentController@delete')->name('doc:attachment:delete');
                 Route::post('/{id}/doc/{page_id}/attachments', 'AttachmentController@upload')
                      ->name('doc:attachment:upload');
 
